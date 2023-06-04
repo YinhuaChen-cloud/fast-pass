@@ -33,32 +33,16 @@ AnalysisKey StaticCallCounter::Key;
 StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
   llvm::DenseMap<const llvm::Function *, unsigned> Res;
 
+  errs() << "cyh: In runOnModule" << "\n";
+
   for (auto &Func : M) {
     for (auto &BB : Func) {
       for (auto &Ins : BB) {
-        // As per the comments in CallSite.h (more specifically, comments for
-        // the base class CallSiteBase), ImmutableCallSite constructor creates
-        // a valid call-site or NULL for something which is NOT a call site.
-        auto ICS = ImmutableCallSite(&Ins);
 
-        // Check whether the instruction is actually a call/invoke
-        if (nullptr == ICS.getInstruction()) {
-          continue;
-        }
 
-        // Check whether the called function is directly invoked
-        auto DirectInvoc =
-            dyn_cast<Function>(ICS.getCalledValue()->stripPointerCasts());
-        if (nullptr == DirectInvoc) {
-          continue;
-        }
 
-        // Update the count for the particular call
-        auto CallCount = Res.find(DirectInvoc);
-        if (Res.end() == CallCount) {
-          CallCount = Res.insert(std::make_pair(DirectInvoc, 0)).first;
-        }
-        ++CallCount->second;
+
+
       }
     }
   }
@@ -145,3 +129,27 @@ void printStaticCCResult(raw_ostream &OutS, const ResultStaticCC &DirectCalls) {
                    NumDirectCalls);
   }
 }
+
+        // // As per the comments in CallSite.h (more specifically, comments for
+        // // the base class CallSiteBase), ImmutableCallSite constructor creates
+        // // a valid call-site or NULL for something which is NOT a call site.
+        // auto ICS = ImmutableCallSite(&Ins);
+
+        // // Check whether the instruction is actually a call/invoke
+        // if (nullptr == ICS.getInstruction()) {
+        //   continue;
+        // }
+
+        // // Check whether the called function is directly invoked
+        // auto DirectInvoc =
+        //     dyn_cast<Function>(ICS.getCalledValue()->stripPointerCasts());
+        // if (nullptr == DirectInvoc) {
+        //   continue;
+        // }
+
+        // // Update the count for the particular call
+        // auto CallCount = Res.find(DirectInvoc);
+        // if (Res.end() == CallCount) {
+        //   CallCount = Res.insert(std::make_pair(DirectInvoc, 0)).first;
+        // }
+        // ++CallCount->second;
