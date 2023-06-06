@@ -15,8 +15,8 @@
 //
 // License: MIT
 //========================================================================
+#include <iostream>
 #include "StaticCallCounter.h"
-
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
@@ -34,32 +34,22 @@ AnalysisKey StaticCallCounter::Key;
 StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
   llvm::DenseMap<const llvm::Function *, unsigned> Res;
 
+  // 一个三元组Vector，用来储存所有的突变点
+  std::vector<std::tuple<int, int, int>> MutationPoints;
+
   errs() << "cyh: In runOnModule" << "\n";
 
+  int funcID = 0;
+  
   for (auto &Func : M) {
+
+    int bbID = 0;
+
     for (auto &BB : Func) {
+
+      int insID = 0;
+
       for (auto &Ins : BB) {
-
-        // 尝试使用以下两种方法去识别常数，都没用
-        // if(auto *CI = dyn_cast<ConstantInt>(&Ins)) {
-        //   errs() << "CI: " << CI->getValue() << "\n";
-        // }
-        // if(auto *C = dyn_cast<Constant>(&Ins)) {
-        //   errs() << "C: " << *C << "\n";
-        // }
-
-        // for(auto &cyhoperand = Ins.value_op_begin(); cyhoperand != Ins.value_op_end(); cyhoperand++) {
-        //   if (isa<Constant>(&cyhoperand))
-        //     Constant *C = cast<Constant>(&cyhoperand);
-        //     errs() << "C: " << *C << "\n";
-        // }
-
-        // 尝试使用这种方法去识别常数，能够识别C程序中的常数，但是也会识别出很多无关的东西
-        // for (auto operand = Ins.operands().begin(); operand != Ins.operands().end(); ++operand) {
-        //   if(auto *CI = dyn_cast<ConstantInt>(operand))
-        //     errs() << "CI: " << CI->getValue() << "\n";
-        //     // errs() << "cyh operand: " << operand->get() << "\n";
-        // }
 
         if (isa<ICmpInst>(&Ins)) {  
           // MutationPoints.push_back(std::make_tuple(functionName, bbcounter, icounter));
@@ -108,8 +98,12 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
               break;
             default:
               errs() << "unknown icmp predicate\n";
+              continue;
               break;
           }
+
+          MutationPoints.push_back(std::make_tuple(insID, bbID, funcID));
+
         }
         else if (auto *op = dyn_cast<UnaryOperator>(&Ins)) { 
           errs() << "Unary operator: " << op->getOpcodeName() << "\n";
@@ -169,22 +163,29 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
               break;
             default:
               errs() << "Binary operator: " << op->getOpcodeName() << "\n";
+              continue;
               break;
           }
-          // MutationPoints.push_back(std::make_tuple(functionName, bbcounter, icounter));
+
+          MutationPoints.push_back(std::make_tuple(insID, bbID, funcID));
+
         }
-        // 下面这个分支会捕捉到 if, if-else, for循环，while循环，三元运算符。
-        // TODO: 可以想想怎么把 if-else 和 三元运算符 分离出来
-        // else if (auto *BI = dyn_cast<BranchInst>(&Ins)) {
-        //   if (BI->isConditional()) {
-        //     // This is an if-else branch
-        //     // Perform any analysis or transformations here
-        //     errs() << "This is an if-else branch" << "\n";
-        //   }
-        // }
+
+        insID++;
 
       }
+
+      bbID++;
+
     }
+
+    funcID++;
+
+  }
+
+  // print collected mutation points
+  for(auto &t : MutationPoints) {
+    errs() << "(" << std::get<0>(t) << ", " << std::get<1>(t) << ", " << std::get<2>(t) << ")" << "\n";
   }
 
   return Res;
@@ -293,3 +294,36 @@ void printStaticCCResult(raw_ostream &OutS, const ResultStaticCC &DirectCalls) {
         //   CallCount = Res.insert(std::make_pair(DirectInvoc, 0)).first;
         // }
         // ++CallCount->second;
+
+
+
+        // 尝试使用以下两种方法去识别常数，都没用
+        // if(auto *CI = dyn_cast<ConstantInt>(&Ins)) {
+        //   errs() << "CI: " << CI->getValue() << "\n";
+        // }
+        // if(auto *C = dyn_cast<Constant>(&Ins)) {
+        //   errs() << "C: " << *C << "\n";
+        // }
+
+        // for(auto &cyhoperand = Ins.value_op_begin(); cyhoperand != Ins.value_op_end(); cyhoperand++) {
+        //   if (isa<Constant>(&cyhoperand))
+        //     Constant *C = cast<Constant>(&cyhoperand);
+        //     errs() << "C: " << *C << "\n";
+        // }
+
+        // 尝试使用这种方法去识别常数，能够识别C程序中的常数，但是也会识别出很多无关的东西
+        // for (auto operand = Ins.operands().begin(); operand != Ins.operands().end(); ++operand) {
+        //   if(auto *CI = dyn_cast<ConstantInt>(operand))
+        //     errs() << "CI: " << CI->getValue() << "\n";
+        //     // errs() << "cyh operand: " << operand->get() << "\n";
+        // }
+
+        // 下面这个分支会捕捉到 if, if-else, for循环，while循环，三元运算符。
+        // TODO: 可以想想怎么把 if-else 和 三元运算符 分离出来
+        // else if (auto *BI = dyn_cast<BranchInst>(&Ins)) {
+        //   if (BI->isConditional()) {
+        //     // This is an if-else branch
+        //     // Perform any analysis or transformations here
+        //     errs() << "This is an if-else branch" << "\n";
+        //   }
+        // }
