@@ -64,14 +64,13 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
     exit(1);
   }
 
+  // If program reach here, means reading mutationPoint file successfully
+
+  
+
   int funcID = 0;
   
   for (auto &Func : M) {
-
-    s2n_conn_set_handshake_type
-    s2n_handshake_type_set_tls12_flag
-
-    errs() << "Function Name: " << Func.getName() << "\n";    
 
     int bbID = 0;
 
