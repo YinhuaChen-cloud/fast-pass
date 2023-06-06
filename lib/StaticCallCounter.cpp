@@ -16,6 +16,9 @@
 // License: MIT
 //========================================================================
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <regex>
 #include "StaticCallCounter.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instruction.h"
@@ -37,9 +40,38 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
   // 一个三元组Vector，用来储存所有的突变点
   std::vector<std::tuple<int, int, int>> MutationPoints;
 
+  // 用来解析突变点文件的正则表达式 
+  std::regex pattern("\\((\\d+),\\s*(\\d+),\\s*(\\d+)\\)");
+
+  // 读取 Mutation Point 文件
+  std::ifstream file("all_mutate.txt"); // open the file
+  if (file.is_open()) { // check if the file was opened successfully
+    std::string line;
+    while (std::getline(file, line)) { // read each line of the file
+      std::smatch matches;
+      if (std::regex_match(line, matches, pattern)) {
+        std::tuple<int, int, int> point(std::stoi(matches[1]), std::stoi(matches[2]), std::stoi(matches[3]));
+        MutationPoints.push_back(point);
+      }
+      else {
+        std::cerr << "Regex cannot parse\n";
+        exit(1);
+      }
+    }
+    file.close(); // close the file when we're done
+  } else {
+    std::cerr << "Failed to open mutation point file\n";
+    exit(1);
+  }
+
   int funcID = 0;
   
   for (auto &Func : M) {
+
+    s2n_conn_set_handshake_type
+    s2n_handshake_type_set_tls12_flag
+
+    errs() << "Function Name: " << Func.getName() << "\n";    
 
     int bbID = 0;
 
@@ -179,11 +211,6 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
 
     funcID++;
 
-  }
-
-  // print collected mutation points
-  for(auto &t : MutationPoints) {
-    errs() << "(" << std::get<0>(t) << ", " << std::get<1>(t) << ", " << std::get<2>(t) << ")" << "\n";
   }
 
   return Res;
