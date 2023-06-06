@@ -19,6 +19,7 @@
 
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instruction.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/Format.h"
@@ -39,9 +40,148 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
     for (auto &BB : Func) {
       for (auto &Ins : BB) {
 
+        // 尝试使用以下两种方法去识别常数，都没用
+        // if(auto *CI = dyn_cast<ConstantInt>(&Ins)) {
+        //   errs() << "CI: " << CI->getValue() << "\n";
+        // }
+        // if(auto *C = dyn_cast<Constant>(&Ins)) {
+        //   errs() << "C: " << *C << "\n";
+        // }
 
+        // for(auto &cyhoperand = Ins.value_op_begin(); cyhoperand != Ins.value_op_end(); cyhoperand++) {
+        //   if (isa<Constant>(&cyhoperand))
+        //     Constant *C = cast<Constant>(&cyhoperand);
+        //     errs() << "C: " << *C << "\n";
+        // }
 
+        // 尝试使用这种方法去识别常数，能够识别C程序中的常数，但是也会识别出很多无关的东西
+        // for (auto operand = Ins.operands().begin(); operand != Ins.operands().end(); ++operand) {
+        //   if(auto *CI = dyn_cast<ConstantInt>(operand))
+        //     errs() << "CI: " << CI->getValue() << "\n";
+        //     // errs() << "cyh operand: " << operand->get() << "\n";
+        // }
 
+        if (isa<ICmpInst>(&Ins)) {  
+          // MutationPoints.push_back(std::make_tuple(functionName, bbcounter, icounter));
+          // This is an icmp instruction
+          ICmpInst *icmpInst = cast<ICmpInst>(&Ins);
+          // Get the icmp predicate
+          CmpInst::Predicate predicate = icmpInst->getPredicate();
+          // Print the corresponding string representation of the predicate
+          switch (predicate) {
+            // 2 Not ! Drop the operator        作为 icmp ne 处理，即 value != 0
+            // 19 Neq != ==
+            case CmpInst::ICMP_NE:
+              errs() << "icmp ne\n";
+              break;
+            // 14 Lt < One of <=, >=, >, ==, !=
+            case CmpInst::ICMP_SLT:
+              errs() << "icmp slt\n";
+              break;
+            case CmpInst::ICMP_ULT:
+              errs() << "icmp ult\n";
+              break;
+            // 15 Le <= One of <, >=, >, ==, !=
+            case CmpInst::ICMP_SLE:
+              errs() << "icmp sle\n";
+              break;
+            case CmpInst::ICMP_ULE:
+              errs() << "icmp ule\n";
+              break;
+            // 16 Ge >= One of <, <=, >, ==, !=
+            case CmpInst::ICMP_SGE:
+              errs() << "icmp sge\n";
+              break;
+            case CmpInst::ICMP_UGE:
+              errs() << "icmp uge\n";
+              break;
+            // 17 Gt > One of <, <=, >=, ==, !=
+            case CmpInst::ICMP_SGT:
+              errs() << "icmp sgt\n";
+              break;
+            case CmpInst::ICMP_UGT:
+              errs() << "icmp ugt\n";
+              break;
+            // 18 Equality Eq == !=
+            case CmpInst::ICMP_EQ:
+              errs() << "icmp eq\n";
+              break;
+            default:
+              errs() << "unknown icmp predicate\n";
+              break;
+          }
+        }
+        else if (auto *op = dyn_cast<UnaryOperator>(&Ins)) { 
+          errs() << "Unary operator: " << op->getOpcodeName() << "\n";
+        }
+        else if (auto *op = dyn_cast<BinaryOperator>(&Ins)) { 
+          switch (op->getOpcode()) {
+            // 1 Unary Neg - Drop the operator  似乎作为 0 - operand 了，突变相当于改成 + 号
+            // 4 Sub - One of +, *, /, %
+            case Instruction::Sub:
+              errs() << "cyh: sub" << "\n";
+              break;
+            // 3 Add + One of -, *, /, %
+            case Instruction::Add:
+              errs() << "cyh: Add" << "\n";
+              break;
+            // 5 Mul * One of +, -, /, %
+            case Instruction::Mul:
+              errs() << "cyh: Mul" << "\n";
+              break;
+            // 6 Div / One of +, -, *, %
+            case Instruction::SDiv:
+              errs() << "cyh: SDiv" << "\n";
+              break;
+            case Instruction::UDiv:
+              errs() << "cyh: UDiv" << "\n";
+              break;
+            // 7 Mod % One of +, -, *, /
+            case Instruction::SRem:
+              errs() << "cyh: SRem" << "\n";
+              break;
+            case Instruction::URem:
+              errs() << "cyh: URem" << "\n";
+              break;
+            // 8 BitAnd & One of |, ˆ
+            case Instruction::And:
+              errs() << "cyh: And" << "\n";
+              break;
+            // 9 BitOr | One of &, ˆ
+            case Instruction::Or:
+              errs() << "cyh: Or" << "\n";
+              break;
+            // 10 BitXor ˆ One of &, |
+            case Instruction::Xor:
+              errs() << "cyh: Xor" << "\n";
+              break;
+            // 11 Shl « One of »L, »A
+            case Instruction::Shl:
+              errs() << "cyh: Shl" << "\n";
+              break;
+            // 12 LShr »L Shl «
+            case Instruction::LShr:
+              errs() << "cyh: LShr" << "\n";
+              break;
+            // 13 AShr »A Shl «
+            case Instruction::AShr:
+              errs() << "cyh: AShr" << "\n";
+              break;
+            default:
+              errs() << "Binary operator: " << op->getOpcodeName() << "\n";
+              break;
+          }
+          // MutationPoints.push_back(std::make_tuple(functionName, bbcounter, icounter));
+        }
+        // 下面这个分支会捕捉到 if, if-else, for循环，while循环，三元运算符。
+        // TODO: 可以想想怎么把 if-else 和 三元运算符 分离出来
+        // else if (auto *BI = dyn_cast<BranchInst>(&Ins)) {
+        //   if (BI->isConditional()) {
+        //     // This is an if-else branch
+        //     // Perform any analysis or transformations here
+        //     errs() << "This is an if-else branch" << "\n";
+        //   }
+        // }
 
       }
     }

@@ -2,6 +2,13 @@
 
 #include <stdbool.h>
 
+
+typedef enum {
+  INITIAL = 0,
+  NEGOTIATED = 1,
+  FULL_HANDSHAKE = 2
+} s2n_handshake_type_flag;
+
 // # Category Mutation point Mutate into
 // 1 Unary Neg - Drop the operator
 // 2 Not ! Drop the operator
@@ -22,6 +29,8 @@ void binaryMutate(int i1, int i2) {
   int o3 = i1 * i2;
   int o4 = i1 / i2;
   int o5 = i1 % i2;
+  unsigned int o6 = (unsigned int)i1 / (unsigned int)i2;
+  unsigned int o7 = (unsigned int)i1 % (unsigned int)i2;
 }
 
 // Bitwise
@@ -54,6 +63,10 @@ void compareMutate(int i1, int i2) {
   int o4 = i1 > i2;
   int o5 = i1 == i2;
   int o6 = i1 != i2;
+  unsigned int o7 = (unsigned int)i1 < (unsigned int)i2;
+  unsigned int o8 = (unsigned int)i1 <= (unsigned int)i2;
+  unsigned int o9 = (unsigned int)i1 >= (unsigned int)i2;
+  unsigned int o10 = (unsigned int)i1 > (unsigned int)i2;
 }
 
 // Constant
@@ -85,6 +98,10 @@ int structureMutate(int i1, int i2, int i3) {
   }
 
   return i1 > i2 ? i3 : 0;
+}
+
+void callOther() {
+  compareMutate(102, 103);
 }
 
 
