@@ -34,12 +34,20 @@ AnalysisKey StaticCallCounter::Key;
 StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
   llvm::DenseMap<const llvm::Function *, unsigned> Res;
 
+  std::string func1 = "s2n_conn_set_handshake_type";
+  std::string func2 = "s2n_handshake_type_set_tls12_flag";
+
   // 一个三元组Vector，用来储存所有的突变点
   std::vector<std::tuple<int, int, int>> MutationPoints;
 
   int funcID = 0;
   
   for (auto &Func : M) {
+
+    if(Func.getName().compare(func1) == 0)
+      errs() << "func1's ID = " << funcID << "\n";
+    if(Func.getName().compare(func2) == 0)
+      errs() << "func2's ID = " << funcID << "\n";
 
     int bbID = 0;
 
@@ -100,7 +108,7 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
               break;
           }
 
-          MutationPoints.push_back(std::make_tuple(insID, bbID, funcID));
+          MutationPoints.push_back(std::make_tuple(funcID, bbID, insID));
 
         }
         else if (auto *op = dyn_cast<UnaryOperator>(&Ins)) { 
@@ -165,7 +173,7 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
               break;
           }
 
-          MutationPoints.push_back(std::make_tuple(insID, bbID, funcID));
+          MutationPoints.push_back(std::make_tuple(funcID, bbID, insID));
 
         }
 
