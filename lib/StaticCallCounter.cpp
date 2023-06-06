@@ -44,10 +44,20 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
   
   for (auto &Func : M) {
 
-    if(Func.getName().compare(func1) == 0)
+    int target = 0;
+    
+    if(Func.getName().compare(func1) == 0) {
       errs() << "func1's ID = " << funcID << "\n";
-    if(Func.getName().compare(func2) == 0)
-      errs() << "func2's ID = " << funcID << "\n";
+      target = 1;
+    }
+
+    // if(Func.getName().compare(func2) == 0) {
+    //   errs() << "func2's ID = " << funcID << "\n";
+    //   target = 1;
+    // }
+
+    if(target == 0) 
+      continue;
 
     int bbID = 0;
 
@@ -57,7 +67,12 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
 
       for (auto &Ins : BB) {
 
+        errs() << "funcName = " << Func.getName() << ", this line: ";
+        Ins.print(errs());
+        errs() << "\n";
+
         if (isa<ICmpInst>(&Ins)) {  
+
           // MutationPoints.push_back(std::make_tuple(functionName, bbcounter, icounter));
           // This is an icmp instruction
           ICmpInst *icmpInst = cast<ICmpInst>(&Ins);
@@ -68,111 +83,113 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
             // 2 Not ! Drop the operator        作为 icmp ne 处理，即 value != 0
             // 19 Neq != ==
             case CmpInst::ICMP_NE:
-              // errs() << "icmp ne\n";
+              errs() << "icmp ne\n";
               break;
             // 14 Lt < One of <=, >=, >, ==, !=
             case CmpInst::ICMP_SLT:
-              // errs() << "icmp slt\n";
+              errs() << "icmp slt\n";
               break;
             case CmpInst::ICMP_ULT:
-              // errs() << "icmp ult\n";
+              errs() << "icmp ult\n";
               break;
             // 15 Le <= One of <, >=, >, ==, !=
             case CmpInst::ICMP_SLE:
-              // errs() << "icmp sle\n";
+              errs() << "icmp sle\n";
               break;
             case CmpInst::ICMP_ULE:
-              // errs() << "icmp ule\n";
+              errs() << "icmp ule\n";
               break;
             // 16 Ge >= One of <, <=, >, ==, !=
             case CmpInst::ICMP_SGE:
-              // errs() << "icmp sge\n";
+              errs() << "icmp sge\n";
               break;
             case CmpInst::ICMP_UGE:
-              // errs() << "icmp uge\n";
+              errs() << "icmp uge\n";
               break;
             // 17 Gt > One of <, <=, >=, ==, !=
             case CmpInst::ICMP_SGT:
-              // errs() << "icmp sgt\n";
+              errs() << "icmp sgt\n";
               break;
             case CmpInst::ICMP_UGT:
-              // errs() << "icmp ugt\n";
+              errs() << "icmp ugt\n";
               break;
             // 18 Equality Eq == !=
             case CmpInst::ICMP_EQ:
-              // errs() << "icmp eq\n";
+              errs() << "icmp eq\n";
               break;
             default:
-              // errs() << "unknown icmp predicate\n";
+              errs() << "unknown icmp predicate\n";
               continue;
               break;
           }
 
+          errs() << "first push_back\n";
           MutationPoints.push_back(std::make_tuple(funcID, bbID, insID));
 
         }
         else if (auto *op = dyn_cast<UnaryOperator>(&Ins)) { 
-          // errs() << "Unary operator: " << op->getOpcodeName() << "\n";
+          errs() << "Unary operator: " << op->getOpcodeName() << "\n";
         }
         else if (auto *op = dyn_cast<BinaryOperator>(&Ins)) { 
           switch (op->getOpcode()) {
             // 1 Unary Neg - Drop the operator  似乎作为 0 - operand 了，突变相当于改成 + 号
             // 4 Sub - One of +, *, /, %
             case Instruction::Sub:
-              // errs() << "cyh: sub" << "\n";
+              errs() << "cyh: sub" << "\n";
               break;
             // 3 Add + One of -, *, /, %
             case Instruction::Add:
-              // errs() << "cyh: Add" << "\n";
+              errs() << "cyh: Add" << "\n";
               break;
             // 5 Mul * One of +, -, /, %
             case Instruction::Mul:
-              // errs() << "cyh: Mul" << "\n";
+              errs() << "cyh: Mul" << "\n";
               break;
             // 6 Div / One of +, -, *, %
             case Instruction::SDiv:
-              // errs() << "cyh: SDiv" << "\n";
+              errs() << "cyh: SDiv" << "\n";
               break;
             case Instruction::UDiv:
-              // errs() << "cyh: UDiv" << "\n";
+              errs() << "cyh: UDiv" << "\n";
               break;
             // 7 Mod % One of +, -, *, /
             case Instruction::SRem:
-              // errs() << "cyh: SRem" << "\n";
+              errs() << "cyh: SRem" << "\n";
               break;
             case Instruction::URem:
-              // errs() << "cyh: URem" << "\n";
+              errs() << "cyh: URem" << "\n";
               break;
             // 8 BitAnd & One of |, ˆ
             case Instruction::And:
-              // errs() << "cyh: And" << "\n";
+              errs() << "cyh: And" << "\n";
               break;
             // 9 BitOr | One of &, ˆ
             case Instruction::Or:
-              // errs() << "cyh: Or" << "\n";
+              errs() << "cyh: Or" << "\n";
               break;
             // 10 BitXor ˆ One of &, |
             case Instruction::Xor:
-              // errs() << "cyh: Xor" << "\n";
+              errs() << "cyh: Xor" << "\n";
               break;
             // 11 Shl « One of »L, »A
             case Instruction::Shl:
-              // errs() << "cyh: Shl" << "\n";
+              errs() << "cyh: Shl" << "\n";
               break;
             // 12 LShr »L Shl «
             case Instruction::LShr:
-              // errs() << "cyh: LShr" << "\n";
+              errs() << "cyh: LShr" << "\n";
               break;
             // 13 AShr »A Shl «
             case Instruction::AShr:
-              // errs() << "cyh: AShr" << "\n";
+              errs() << "cyh: AShr" << "\n";
               break;
             default:
-              // errs() << "Binary operator: " << op->getOpcodeName() << "\n";
+              errs() << "Binary operator: " << op->getOpcodeName() << "\n";
               continue;
               break;
           }
 
+          errs() << "second push_back\n";
           MutationPoints.push_back(std::make_tuple(funcID, bbID, insID));
 
         }
