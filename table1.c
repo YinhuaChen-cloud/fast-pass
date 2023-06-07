@@ -2,7 +2,6 @@
 
 #include <stdbool.h>
 
-
 typedef enum {
   INITIAL = 0,
   NEGOTIATED = 1,

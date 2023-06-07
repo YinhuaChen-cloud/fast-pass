@@ -22,6 +22,8 @@
 #include <random>
 #include <cstdio>
 #include <cstdarg>
+#include <cstdlib>
+#include <ctime>
 #include "StaticCallCounter.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instruction.h"
@@ -65,6 +67,9 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
   // 初始化日志类
   Logger logger(true);
 
+  // 初始化随机数种子
+  srand(time(NULL)); // seed the random number generator with the current time
+
   llvm::DenseMap<const llvm::Function *, unsigned> Res;
 
   // 一个三元组Vector，用来储存所有的突变点
@@ -94,19 +99,22 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
     exit(1);
   }
 
-  // 从读取的突变点中随机取一个出来
-  // 生成随机数引擎
-  std::random_device rd;
-  std::mt19937 gen(rd());
-
-  // 生成随机索引
-  std::uniform_int_distribution<> dis(0, MutationPoints.size() - 1);
-  int index = dis(gen);
+  int index = rand() % MutationPoints.size();
 
   // 抽取随机突变点
   std::tuple<int, int, int> random_point = MutationPoints[index];
 
   // If program reach here, means reading mutationPoint file successfully
+  logger.log("the mutation point selected is (%d, %d, %d)\n", 
+    std::get<0>(random_point), std::get<1>(random_point), std::get<2>(random_point));
+
+  exit(0);
+
+  // 初始化突变选择子
+  int mul_select = -1;
+
+  // 标注是否修改
+  bool modified = false;
 
   int funcID = 0;
   
@@ -146,38 +154,138 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
             // 2 Not ! Drop the operator        作为 icmp ne 处理，即 value != 0
             // 19 Neq != ==
             case CmpInst::ICMP_NE:
+              icmpInst->setPredicate(CmpInst::ICMP_EQ);
+              modified = true;
               logger.log("icmp ne\n");
               break;
             // 14 Lt < One of <=, >=, >, ==, !=
             case CmpInst::ICMP_SLT:
+              mul_select = rand() % 5;
+              if(0 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_SLE);
+              else if(1 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_SGE);
+              else if(2 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_SGT);
+              else if(3 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_EQ);
+              else
+                icmpInst->setPredicate(CmpInst::ICMP_NE);
+              modified = true;
               logger.log("icmp slt\n");
               break;
             case CmpInst::ICMP_ULT:
+              mul_select = rand() % 5;
+              if(0 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_ULE);
+              else if(1 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_UGE);
+              else if(2 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_UGT);
+              else if(3 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_EQ);
+              else
+                icmpInst->setPredicate(CmpInst::ICMP_NE);
+              modified = true;
               logger.log("icmp ult\n");
               break;
             // 15 Le <= One of <, >=, >, ==, !=
             case CmpInst::ICMP_SLE:
+              mul_select = rand() % 5;
+              if(0 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_SLT);
+              else if(1 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_SGE);
+              else if(2 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_SGT);
+              else if(3 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_EQ);
+              else
+                icmpInst->setPredicate(CmpInst::ICMP_NE);
+              modified = true;
               logger.log("icmp sle\n");
               break;
             case CmpInst::ICMP_ULE:
+              mul_select = rand() % 5;
+              if(0 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_ULT);
+              else if(1 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_UGE);
+              else if(2 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_UGT);
+              else if(3 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_EQ);
+              else
+                icmpInst->setPredicate(CmpInst::ICMP_NE);
+              modified = true;
               logger.log("icmp ule\n");
               break;
             // 16 Ge >= One of <, <=, >, ==, !=
             case CmpInst::ICMP_SGE:
+              mul_select = rand() % 5;
+              if(0 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_SLT);
+              else if(1 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_SLE);
+              else if(2 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_SGT);
+              else if(3 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_EQ);
+              else
+                icmpInst->setPredicate(CmpInst::ICMP_NE);
+              modified = true;
               logger.log("icmp sge\n");
               break;
             case CmpInst::ICMP_UGE:
+              mul_select = rand() % 5;
+              if(0 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_ULT);
+              else if(1 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_ULE);
+              else if(2 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_UGT);
+              else if(3 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_EQ);
+              else
+                icmpInst->setPredicate(CmpInst::ICMP_NE);
+              modified = true;
               logger.log("icmp uge\n");
               break;
             // 17 Gt > One of <, <=, >=, ==, !=
             case CmpInst::ICMP_SGT:
+              mul_select = rand() % 5;
+              if(0 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_SLT);
+              else if(1 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_SLE);
+              else if(2 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_SGE);
+              else if(3 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_EQ);
+              else
+                icmpInst->setPredicate(CmpInst::ICMP_NE);
+              modified = true;
               logger.log("icmp sgt\n");
               break;
             case CmpInst::ICMP_UGT:
+              mul_select = rand() % 5;
+              if(0 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_ULT);
+              else if(1 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_ULE);
+              else if(2 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_UGE);
+              else if(3 == mul_select)
+                icmpInst->setPredicate(CmpInst::ICMP_EQ);
+              else
+                icmpInst->setPredicate(CmpInst::ICMP_NE);
+              modified = true;
               logger.log("icmp ugt\n");
               break;
             // 18 Equality Eq == !=
             case CmpInst::ICMP_EQ:
+              icmpInst->setPredicate(CmpInst::ICMP_NE);
+              modified = true;
               logger.log("icmp eq\n");
               break;
             default:
