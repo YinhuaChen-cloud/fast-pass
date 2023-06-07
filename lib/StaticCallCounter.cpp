@@ -31,6 +31,7 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/Format.h"
+#include "llvm/IR/IRBuilder.h"
 
 using namespace llvm;
 
@@ -111,8 +112,7 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
   exit(0);
 
   // 初始化突变选择子
-  int mul_select = -1;
-
+  int mutate_sel = -1;
   // 标注是否修改
   bool modified = false;
 
@@ -160,14 +160,14 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
               break;
             // 14 Lt < One of <=, >=, >, ==, !=
             case CmpInst::ICMP_SLT:
-              mul_select = rand() % 5;
-              if(0 == mul_select)
+              mutate_sel = rand() % 5;
+              if(0 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_SLE);
-              else if(1 == mul_select)
+              else if(1 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_SGE);
-              else if(2 == mul_select)
+              else if(2 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_SGT);
-              else if(3 == mul_select)
+              else if(3 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_EQ);
               else
                 icmpInst->setPredicate(CmpInst::ICMP_NE);
@@ -175,14 +175,14 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
               logger.log("icmp slt\n");
               break;
             case CmpInst::ICMP_ULT:
-              mul_select = rand() % 5;
-              if(0 == mul_select)
+              mutate_sel = rand() % 5;
+              if(0 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_ULE);
-              else if(1 == mul_select)
+              else if(1 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_UGE);
-              else if(2 == mul_select)
+              else if(2 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_UGT);
-              else if(3 == mul_select)
+              else if(3 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_EQ);
               else
                 icmpInst->setPredicate(CmpInst::ICMP_NE);
@@ -191,14 +191,14 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
               break;
             // 15 Le <= One of <, >=, >, ==, !=
             case CmpInst::ICMP_SLE:
-              mul_select = rand() % 5;
-              if(0 == mul_select)
+              mutate_sel = rand() % 5;
+              if(0 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_SLT);
-              else if(1 == mul_select)
+              else if(1 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_SGE);
-              else if(2 == mul_select)
+              else if(2 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_SGT);
-              else if(3 == mul_select)
+              else if(3 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_EQ);
               else
                 icmpInst->setPredicate(CmpInst::ICMP_NE);
@@ -206,14 +206,14 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
               logger.log("icmp sle\n");
               break;
             case CmpInst::ICMP_ULE:
-              mul_select = rand() % 5;
-              if(0 == mul_select)
+              mutate_sel = rand() % 5;
+              if(0 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_ULT);
-              else if(1 == mul_select)
+              else if(1 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_UGE);
-              else if(2 == mul_select)
+              else if(2 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_UGT);
-              else if(3 == mul_select)
+              else if(3 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_EQ);
               else
                 icmpInst->setPredicate(CmpInst::ICMP_NE);
@@ -222,14 +222,14 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
               break;
             // 16 Ge >= One of <, <=, >, ==, !=
             case CmpInst::ICMP_SGE:
-              mul_select = rand() % 5;
-              if(0 == mul_select)
+              mutate_sel = rand() % 5;
+              if(0 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_SLT);
-              else if(1 == mul_select)
+              else if(1 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_SLE);
-              else if(2 == mul_select)
+              else if(2 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_SGT);
-              else if(3 == mul_select)
+              else if(3 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_EQ);
               else
                 icmpInst->setPredicate(CmpInst::ICMP_NE);
@@ -237,14 +237,14 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
               logger.log("icmp sge\n");
               break;
             case CmpInst::ICMP_UGE:
-              mul_select = rand() % 5;
-              if(0 == mul_select)
+              mutate_sel = rand() % 5;
+              if(0 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_ULT);
-              else if(1 == mul_select)
+              else if(1 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_ULE);
-              else if(2 == mul_select)
+              else if(2 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_UGT);
-              else if(3 == mul_select)
+              else if(3 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_EQ);
               else
                 icmpInst->setPredicate(CmpInst::ICMP_NE);
@@ -253,14 +253,14 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
               break;
             // 17 Gt > One of <, <=, >=, ==, !=
             case CmpInst::ICMP_SGT:
-              mul_select = rand() % 5;
-              if(0 == mul_select)
+              mutate_sel = rand() % 5;
+              if(0 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_SLT);
-              else if(1 == mul_select)
+              else if(1 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_SLE);
-              else if(2 == mul_select)
+              else if(2 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_SGE);
-              else if(3 == mul_select)
+              else if(3 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_EQ);
               else
                 icmpInst->setPredicate(CmpInst::ICMP_NE);
@@ -268,14 +268,14 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
               logger.log("icmp sgt\n");
               break;
             case CmpInst::ICMP_UGT:
-              mul_select = rand() % 5;
-              if(0 == mul_select)
+              mutate_sel = rand() % 5;
+              if(0 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_ULT);
-              else if(1 == mul_select)
+              else if(1 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_ULE);
-              else if(2 == mul_select)
+              else if(2 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_UGE);
-              else if(3 == mul_select)
+              else if(3 == mutate_sel)
                 icmpInst->setPredicate(CmpInst::ICMP_EQ);
               else
                 icmpInst->setPredicate(CmpInst::ICMP_NE);
@@ -298,56 +298,148 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
           errs() << "Unary operator: " << op->getOpcodeName() << "\n";
         }
         else if (auto *op = dyn_cast<BinaryOperator>(&Ins)) { 
+          // 初始化 IRBuilder
+          IRBuilder<> builder(op);
+          Value* lhs = op->getOperand(0);
+          Value* rhs = op->getOperand(1);
+          Value* newop = NULL;
+
           switch (op->getOpcode()) {
             // 1 Unary Neg - Drop the operator  似乎作为 0 - operand 了，突变相当于改成 + 号
             // 4 Sub - One of +, *, /, %
+            // TODO: 没有做有符号/无符号的区分
             case Instruction::Sub:
+              mutate_sel = rand() % 4;
+              if(0 == mutate_sel)
+                newop = builder.CreateAdd(lhs, rhs);
+              else if(1 == mutate_sel)
+                newop = builder.CreateMul(lhs, rhs);
+              else if(2 == mutate_sel)
+                newop = builder.CreateSDiv(lhs, rhs);
+              else
+                newop = builder.CreateSRem(lhs, rhs);
               logger.log("cyh: sub\n");
               break;
             // 3 Add + One of -, *, /, %
             case Instruction::Add:
+              mutate_sel = rand() % 4;
+              if(0 == mutate_sel)
+                newop = builder.CreateSub(lhs, rhs);
+              else if(1 == mutate_sel)
+                newop = builder.CreateMul(lhs, rhs);
+              else if(2 == mutate_sel)
+                newop = builder.CreateSDiv(lhs, rhs);
+              else
+                newop = builder.CreateSRem(lhs, rhs);
               logger.log("cyh: add\n");
               break;
             // 5 mul * one of +, -, /, %
             case Instruction::Mul:
+              mutate_sel = rand() % 4;
+              if(0 == mutate_sel)
+                newop = builder.CreateAdd(lhs, rhs);
+              else if(1 == mutate_sel)
+                newop = builder.CreateSub(lhs, rhs);
+              else if(2 == mutate_sel)
+                newop = builder.CreateSDiv(lhs, rhs);
+              else
+                newop = builder.CreateSRem(lhs, rhs);
               logger.log("cyh: mul\n");
               break;
             // 6 div / one of +, -, *, %
             case Instruction::SDiv:
+              mutate_sel = rand() % 4;
+              if(0 == mutate_sel)
+                newop = builder.CreateAdd(lhs, rhs);
+              else if(1 == mutate_sel)
+                newop = builder.CreateSub(lhs, rhs);
+              else if(2 == mutate_sel)
+                newop = builder.CreateMul(lhs, rhs);
+              else
+                newop = builder.CreateSRem(lhs, rhs);
               logger.log("cyh: sdiv\n");
               break;
             case Instruction::UDiv:
+              mutate_sel = rand() % 4;
+              if(0 == mutate_sel)
+                newop = builder.CreateAdd(lhs, rhs);
+              else if(1 == mutate_sel)
+                newop = builder.CreateSub(lhs, rhs);
+              else if(2 == mutate_sel)
+                newop = builder.CreateMul(lhs, rhs);
+              else
+                newop = builder.CreateURem(lhs, rhs);
               logger.log("cyh: udiv\n");
               break;
             // 7 mod % one of +, -, *, /
             case Instruction::SRem:
+              mutate_sel = rand() % 4;
+              if(0 == mutate_sel)
+                newop = builder.CreateAdd(lhs, rhs);
+              else if(1 == mutate_sel)
+                newop = builder.CreateSub(lhs, rhs);
+              else if(2 == mutate_sel)
+                newop = builder.CreateMul(lhs, rhs);
+              else
+                newop = builder.CreateSDiv(lhs, rhs);
               logger.log("cyh: srem\n");
               break;
             case Instruction::URem:
+              mutate_sel = rand() % 4;
+              if(0 == mutate_sel)
+                newop = builder.CreateAdd(lhs, rhs);
+              else if(1 == mutate_sel)
+                newop = builder.CreateSub(lhs, rhs);
+              else if(2 == mutate_sel)
+                newop = builder.CreateMul(lhs, rhs);
+              else
+                newop = builder.CreateUDiv(lhs, rhs);
               logger.log("cyh: urem\n");
               break;
             // 8 bitand & one of |, ˆ
             case Instruction::And:
+              mutate_sel = rand() % 2;
+              if(0 == mutate_sel)
+                newop = builder.CreateOr(lhs, rhs);
+              else
+                newop = builder.CreateXor(lhs, rhs);
               logger.log("cyh: and\n");
               break;
             // 9 bitor | one of &, ˆ
             case Instruction::Or:
+              mutate_sel = rand() % 2;
+              if(0 == mutate_sel)
+                newop = builder.CreateAnd(lhs, rhs);
+              else
+                newop = builder.CreateXor(lhs, rhs);
               logger.log("cyh: or\n");
               break;
             // 10 bitxor ˆ one of &, |
             case Instruction::Xor:
+              mutate_sel = rand() % 2;
+              if(0 == mutate_sel)
+                newop = builder.CreateAnd(lhs, rhs);
+              else
+                newop = builder.CreateOr(lhs, rhs);
               logger.log("cyh: xor\n");
               break;
             // 11 shl « one of »l, »a
             case Instruction::Shl:
+              mutate_sel = rand() % 2;
+              if(0 == mutate_sel)
+                newop = builder.CreateLShr(lhs, rhs);
+              else
+                newop = builder.CreateAShr(lhs, rhs);
               logger.log("cyh: shl\n");
               break;
             // 12 lshr »l shl «
             case Instruction::LShr:
+              newop = builder.CreateShl(lhs, rhs);
               logger.log("cyh: lshr\n");
               break;
             // 13 ashr »a shl «
             case Instruction::AShr:
+              newop = builder.CreateShl(lhs, rhs);
               logger.log("cyh: ashr\n");
               break;
             default:
@@ -355,6 +447,18 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
               continue;
               break;
           }
+
+          // Everywhere the old instruction was used as an operand, use our
+          // new multiply instruction instead.
+          for (auto& U : op->uses()) {
+            User* user = U.getUser();  // A User is anything with operands.
+            user->setOperand(U.getOperandNo(), newop);
+          }
+
+          (&Ins)->eraseFromParent(); // 删除旧指令
+
+          modified = true;
+
         }
 
         insID++;
