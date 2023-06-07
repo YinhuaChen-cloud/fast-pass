@@ -19,6 +19,9 @@
 #include <fstream>
 #include <string>
 #include <regex>
+#include <random>
+#include <cstdio>
+#include <cstdarg>
 #include "StaticCallCounter.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instruction.h"
@@ -29,12 +32,39 @@
 
 using namespace llvm;
 
+// 日志函数 by cyh --- start
+class Logger {
+  public:
+    Logger(bool enabled) : enabled_ (enabled) {}
+
+    void log(const char* format, ...) {
+      if (enabled_) {
+        va_list args;
+        va_start(args, format);
+        vprintf(format, args);
+        va_end(args);
+      }
+    }
+
+    void setEnabled(bool enabled) {
+      enabled_ = enabled;
+    }
+
+  private:
+    bool enabled_;
+};
+// 日志函数 by cyh --- end
+
 //-----------------------------------------------------------------------------
 // StaticCallCounter Implementation
 //-----------------------------------------------------------------------------
 AnalysisKey StaticCallCounter::Key;
 
 StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
+
+  // 初始化日志类
+  Logger logger(true);
+
   llvm::DenseMap<const llvm::Function *, unsigned> Res;
 
   // 一个三元组Vector，用来储存所有的突变点
@@ -44,7 +74,7 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
   std::regex pattern("\\((\\d+),\\s*(\\d+),\\s*(\\d+)\\)");
 
   // 读取 Mutation Point 文件
-  std::ifstream file("all_mutate.txt"); // open the file
+  std::ifstream file("fast_mutate.txt"); // open the file
   if (file.is_open()) { // check if the file was opened successfully
     std::string line;
     while (std::getline(file, line)) { // read each line of the file
@@ -64,21 +94,46 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
     exit(1);
   }
 
-  // If program reach here, means reading mutationPoint file successfully
+  // 从读取的突变点中随机取一个出来
+  // 生成随机数引擎
+  std::random_device rd;
+  std::mt19937 gen(rd());
 
-  
+  // 生成随机索引
+  std::uniform_int_distribution<> dis(0, MutationPoints.size() - 1);
+  int index = dis(gen);
+
+  // 抽取随机突变点
+  std::tuple<int, int, int> random_point = MutationPoints[index];
+
+  // If program reach here, means reading mutationPoint file successfully
 
   int funcID = 0;
   
   for (auto &Func : M) {
 
+    if(funcID != std::get<0>(random_point)) {
+      funcID++;
+      continue;
+    }
+
     int bbID = 0;
 
     for (auto &BB : Func) {
 
+      if(bbID != std::get<1>(random_point)) {
+        bbID++;
+        continue;
+      }
+
       int insID = 0;
 
       for (auto &Ins : BB) {
+
+        if(insID != std::get<2>(random_point)) {
+          insID++;
+          continue;
+        }
 
         if (isa<ICmpInst>(&Ins)) {  
           // MutationPoints.push_back(std::make_tuple(functionName, bbcounter, icounter));
@@ -91,113 +146,107 @@ StaticCallCounter::Result StaticCallCounter::runOnModule(Module &M) {
             // 2 Not ! Drop the operator        作为 icmp ne 处理，即 value != 0
             // 19 Neq != ==
             case CmpInst::ICMP_NE:
-              // errs() << "icmp ne\n";
+              logger.log("icmp ne\n");
               break;
             // 14 Lt < One of <=, >=, >, ==, !=
             case CmpInst::ICMP_SLT:
-              // errs() << "icmp slt\n";
+              logger.log("icmp slt\n");
               break;
             case CmpInst::ICMP_ULT:
-              // errs() << "icmp ult\n";
+              logger.log("icmp ult\n");
               break;
             // 15 Le <= One of <, >=, >, ==, !=
             case CmpInst::ICMP_SLE:
-              // errs() << "icmp sle\n";
+              logger.log("icmp sle\n");
               break;
             case CmpInst::ICMP_ULE:
-              // errs() << "icmp ule\n";
+              logger.log("icmp ule\n");
               break;
             // 16 Ge >= One of <, <=, >, ==, !=
             case CmpInst::ICMP_SGE:
-              // errs() << "icmp sge\n";
+              logger.log("icmp sge\n");
               break;
             case CmpInst::ICMP_UGE:
-              // errs() << "icmp uge\n";
+              logger.log("icmp uge\n");
               break;
             // 17 Gt > One of <, <=, >=, ==, !=
             case CmpInst::ICMP_SGT:
-              // errs() << "icmp sgt\n";
+              logger.log("icmp sgt\n");
               break;
             case CmpInst::ICMP_UGT:
-              // errs() << "icmp ugt\n";
+              logger.log("icmp ugt\n");
               break;
             // 18 Equality Eq == !=
             case CmpInst::ICMP_EQ:
-              // errs() << "icmp eq\n";
+              logger.log("icmp eq\n");
               break;
             default:
-              // errs() << "unknown icmp predicate\n";
+              logger.log("unknown icmp predicate\n");
               continue;
               break;
           }
-
-          MutationPoints.push_back(std::make_tuple(insID, bbID, funcID));
-
         }
         else if (auto *op = dyn_cast<UnaryOperator>(&Ins)) { 
-          // errs() << "Unary operator: " << op->getOpcodeName() << "\n";
+          errs() << "Unary operator: " << op->getOpcodeName() << "\n";
         }
         else if (auto *op = dyn_cast<BinaryOperator>(&Ins)) { 
           switch (op->getOpcode()) {
             // 1 Unary Neg - Drop the operator  似乎作为 0 - operand 了，突变相当于改成 + 号
             // 4 Sub - One of +, *, /, %
             case Instruction::Sub:
-              // errs() << "cyh: sub" << "\n";
+              logger.log("cyh: sub\n");
               break;
             // 3 Add + One of -, *, /, %
             case Instruction::Add:
-              // errs() << "cyh: Add" << "\n";
+              logger.log("cyh: add\n");
               break;
-            // 5 Mul * One of +, -, /, %
+            // 5 mul * one of +, -, /, %
             case Instruction::Mul:
-              // errs() << "cyh: Mul" << "\n";
+              logger.log("cyh: mul\n");
               break;
-            // 6 Div / One of +, -, *, %
+            // 6 div / one of +, -, *, %
             case Instruction::SDiv:
-              // errs() << "cyh: SDiv" << "\n";
+              logger.log("cyh: sdiv\n");
               break;
             case Instruction::UDiv:
-              // errs() << "cyh: UDiv" << "\n";
+              logger.log("cyh: udiv\n");
               break;
-            // 7 Mod % One of +, -, *, /
+            // 7 mod % one of +, -, *, /
             case Instruction::SRem:
-              // errs() << "cyh: SRem" << "\n";
+              logger.log("cyh: srem\n");
               break;
             case Instruction::URem:
-              // errs() << "cyh: URem" << "\n";
+              logger.log("cyh: urem\n");
               break;
-            // 8 BitAnd & One of |, ˆ
+            // 8 bitand & one of |, ˆ
             case Instruction::And:
-              // errs() << "cyh: And" << "\n";
+              logger.log("cyh: and\n");
               break;
-            // 9 BitOr | One of &, ˆ
+            // 9 bitor | one of &, ˆ
             case Instruction::Or:
-              // errs() << "cyh: Or" << "\n";
+              logger.log("cyh: or\n");
               break;
-            // 10 BitXor ˆ One of &, |
+            // 10 bitxor ˆ one of &, |
             case Instruction::Xor:
-              // errs() << "cyh: Xor" << "\n";
+              logger.log("cyh: xor\n");
               break;
-            // 11 Shl « One of »L, »A
+            // 11 shl « one of »l, »a
             case Instruction::Shl:
-              // errs() << "cyh: Shl" << "\n";
+              logger.log("cyh: shl\n");
               break;
-            // 12 LShr »L Shl «
+            // 12 lshr »l shl «
             case Instruction::LShr:
-              // errs() << "cyh: LShr" << "\n";
+              logger.log("cyh: lshr\n");
               break;
-            // 13 AShr »A Shl «
+            // 13 ashr »a shl «
             case Instruction::AShr:
-              // errs() << "cyh: AShr" << "\n";
+              logger.log("cyh: ashr\n");
               break;
             default:
-              // errs() << "Binary operator: " << op->getOpcodeName() << "\n";
+              errs() << "Binary operator: " << op->getOpcodeName() << "\n";
               continue;
               break;
           }
-
-          MutationPoints.push_back(std::make_tuple(insID, bbID, funcID));
-
         }
 
         insID++;

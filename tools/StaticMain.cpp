@@ -78,8 +78,15 @@ static void countStaticCalls(Module &M) {
 // Main driver code.
 //===----------------------------------------------------------------------===//
 int main(int Argc, char **Argv) {
+
+  // errs() << "=== cyh ===\n";
+  // errs() << Argv[0] << "\n";
+  // errs() << Argv[1] << "\n";
+  // errs() << Argv[2] << "\n";
+
   // Hide all options apart from the ones specific to this tool
-  cl::HideUnrelatedOptions(CallCounterCategory);
+  // TODO: 猜测这一行是用来决定命令行参数的数量的
+  cl::HideUnrelatedOptions(CallCounterCategory); 
 
   cl::ParseCommandLineOptions(Argc, Argv,
                               "Counts the number of static function "
