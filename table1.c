@@ -1,6 +1,7 @@
 // 这个文件用来作为 突变点检测PASS 的测试用例
 
 #include <stdbool.h>
+#include <stdio.h>
 
 typedef enum {
   INITIAL = 0,
@@ -103,6 +104,12 @@ void callOther() {
   compareMutate(102, 103);
 }
 
+int main() {
+
+  int value = valueMutate();
+  printf("value = %d\n", value);
+
+}
 
 
 

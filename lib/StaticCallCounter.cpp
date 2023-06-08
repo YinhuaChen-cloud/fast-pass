@@ -487,6 +487,9 @@ void LegacyStaticCallCounter::print(raw_ostream &OutS, Module const *) const {
 }
 
 bool LegacyStaticCallCounter::runOnModule(llvm::Module &M) {
+
+  printf("In Legacy\n");
+
   DirectCalls = Impl.runOnModule(M);
   return false;
 }
