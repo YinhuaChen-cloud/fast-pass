@@ -37,7 +37,7 @@ source ~/.bashrc
 After set environment variable LLVM_DIR, we can use the following commands to compile LLVM PASS
 
 ```
-cd <where-you-want-to-compile-llvm>
+cd <where-you-want-to-compile-this-repo>
 clone this repo
 cd this repo
 mkdir -p build
