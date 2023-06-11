@@ -41,6 +41,7 @@ cd <where-you-want-to-compile-this-repo>
 clone this repo
 cd this repo
 mkdir -p build
+cd build
 cmake -GNinja -DLT_LLVM_INSTALL_DIR=$LLVM_DIR ..   
 ninja
 ```
