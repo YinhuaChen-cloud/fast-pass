@@ -30,7 +30,7 @@ If you do have llvm-project in your own machine, make sure it is compiled and th
 set environment variable LLVM_DIR as follows:
 
 ```
-echo "export LLVM_DIR=$(pwd)/build" >> ~/.bashrc  (if you use zsh, then switch to .zshrc)
+echo "export LLVM_DIR=<path-to-llvm-project>/build" >> ~/.bashrc  (if you use zsh, then switch to .zshrc)
 source ~/.bashrc
 ```
 
