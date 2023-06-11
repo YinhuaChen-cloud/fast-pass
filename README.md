@@ -8,13 +8,7 @@ I finish this LLVM PASS based on others' framework, this is a related video: htt
 
 ## How to compile
 
-```
-mkdir -p build
-cmake -GNinja -DLT_LLVM_INSTALL_DIR=$LLVM_DIR ..   
-ninja
-```
-
-$LLVM_DIR is the directory of llvm-project (2019)
+To compile LLVM PASS, you need llvm-project first
 
 If you do not have llvm-project in your own local machine, do the following:
 (NOTE: the following commands may fail several times because of lack of memory, just run them multiple times) (llvm-project may occupy 60G disk space after being compiled)
@@ -29,6 +23,26 @@ cmake -S llvm -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DLLVM_ENABLE_PROJECTS=
 ninja -C build check-llvm
 echo "export LLVM_DIR=$(pwd)/build" >> ~/.bashrc  (if you use zsh, then switch to .zshrc)
 source ~/.bashrc
+```
+
+If you do have llvm-project in your own machine, make sure it is compiled and there is build/bin/opt in llvm-project directory. And I use llvm-9.0.0 so you'd better use llvm-9.0.0 too.
+
+set environment variable LLVM_DIR as follows:
+
+```
+echo "export LLVM_DIR=$(pwd)/build" >> ~/.bashrc  (if you use zsh, then switch to .zshrc)
+source ~/.bashrc
+```
+
+After set environment variable LLVM_DIR, we can use the following commands to compile LLVM PASS
+
+```
+cd <where-you-want-to-compile-llvm>
+clone this repo
+cd this repo
+mkdir -p build
+cmake -GNinja -DLT_LLVM_INSTALL_DIR=$LLVM_DIR ..   
+ninja
 ```
 
 If you compile this project successfully, you will find the target dynamic lib: build/lib/libInjectFuncCall.so
