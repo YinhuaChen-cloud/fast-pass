@@ -17,12 +17,14 @@ ninja
 $LLVM_DIR is the directory of llvm-project (2019)
 
 If you do not have llvm-project in your own local machine, do the following:
-(NOTE: the following commands may fail several times because of lack of memory, just run them multiple times)
+(NOTE: the following commands may fail several times because of lack of memory, just run them multiple times) (llvm-project may occupy 60G disk space after being compiled)
 
 ```
 cd <where-you-want-to-compile-llvm>
 git clone https://github.com/llvm/llvm-project.git
 cd llvm-project
+git checkout llvmorg-9.0.0
+git switch -c fast
 cmake -S llvm -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DLLVM_ENABLE_PROJECTS='clang'
 ninja -C build check-llvm
 echo "export LLVM_DIR=$(pwd)/build" >> ~/.bashrc  (if you use zsh, then switch to .zshrc)
