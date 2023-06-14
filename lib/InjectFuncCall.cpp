@@ -28,6 +28,16 @@
 //
 // License: MIT
 //========================================================================
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <regex>
+#include <random>
+#include <cstdio>
+#include <cstdarg>
+#include <cstdlib>
+#include <ctime>
+
 #include "InjectFuncCall.h"
 
 #include "llvm/IR/IRBuilder.h"
